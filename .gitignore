@@ -1,0 +1,78 @@
+# Python Cache Files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# MacOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python Virtual Environment
+venv/
+env/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints
+
+# Byte-compiled, optimized, and compiled Python files
+*.pyo
+*.pyd
+*.pyd
+*.pdb
+
+# Caches
+*.mypy_cache/
+*.pytest_cache/
+*.cache/
+*.hypothesis/
+
+# Environment variables and sensitive information
+.env
+.env.*
+
+# Logs and debug files
+*.log
+*.sqlite3
+
+# Text and NLP Libraries
+*.spacy
+*.cupy
+*.h5
+*.keras
+*.pt
+*.pth
+*.tflearn
+*.tfrecord
+*.onnx
+*.vec
+*.tsv
+*.csv
+*.model
+*.gensim
+
+# PyCharm Specific
+.idea/
+
+# Jupyter Notebook File Checkpoints
+.ipynb_checkpoints/
+
+# VS Code Specific
+.vscode/
+
+# Profiling data
+.prof
+.profraw
+
+# pyright and mypy configuration
+.pyright
+.mypy.ini
+
+# Temporary Files
+*~
+*.swp
+
+# Project specific files
+combined_accuracy_plots
+embeddings_a2q
+embeddings_q2a
