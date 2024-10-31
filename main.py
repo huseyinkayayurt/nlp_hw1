@@ -1,19 +1,20 @@
 from datasets import load_dataset
 from embeddings import load_model_and_tokenizer, get_embeddings
-from evaluate import calculate_top_k_accuracy
 import torch
 import random
 import csv
 import os
 import warnings
 import time
+import einops  # jinaai/jina-embeddings-v3 dil modeli için gerekli
 
 warnings.filterwarnings("ignore", category=UserWarning, module='urllib3')
-
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def save_embeddings(embeddings, filename):
+    folder_name = os.path.dirname(filename)
+    os.makedirs(folder_name, exist_ok=True)
     torch.save(embeddings, filename)
 
 
@@ -30,27 +31,27 @@ def load_data_from_csv(file_path):
     return questions, answers
 
 
-def process_model_embeddings(model_name, questions, answers, folder_name, batch_size=10):
+def process_model_embeddings(model_name, inputs, outputs, folder_name, batch_size=10):
     """Verilen model için embedding hesaplayıp dosyaya kaydeder."""
     # Model ve tokenizer’ı yükle
     tokenizer, model = load_model_and_tokenizer(model_name)
-    question_embeddings = []
-    answer_embeddings = []
+    input_embeddings = []
+    output_embeddings = []
 
     # Dosya ismindeki özel karakterleri değiştir
     safe_model_name = model_name.replace("/", "_")
 
     # Batch olarak embedding hesapla
-    for i in range(0, len(questions), batch_size):
-        batch_questions = questions[i:i + batch_size]
-        batch_answers = answers[i:i + batch_size]
+    for i in range(0, len(inputs), batch_size):
+        batch_questions = inputs[i:i + batch_size]
+        batch_answers = outputs[i:i + batch_size]
 
-        question_embeddings.append(get_embeddings(batch_questions, tokenizer, model))
-        answer_embeddings.append(get_embeddings(batch_answers, tokenizer, model))
+        input_embeddings.append(get_embeddings(batch_questions, tokenizer, model))
+        output_embeddings.append(get_embeddings(batch_answers, tokenizer, model))
 
     # Embedding'leri dosyaya kaydet
-    save_embeddings(torch.cat(question_embeddings), f'{folder_name}/{safe_model_name}_question_embeddings.pt')
-    save_embeddings(torch.cat(answer_embeddings), f'{folder_name}/{safe_model_name}_answer_embeddings.pt')
+    save_embeddings(torch.cat(input_embeddings), f'{folder_name}/{safe_model_name}_input_embeddings.pt')
+    save_embeddings(torch.cat(output_embeddings), f'{folder_name}/{safe_model_name}_output_embeddings.pt')
 
 
 def main():
@@ -59,7 +60,7 @@ def main():
     questions, answers = load_data_from_csv(file_path)
 
     # Rasgele 1000 soru-cevap seçimi
-    indices = random.sample(range(len(questions)), 1000)
+    indices = random.sample(range(len(questions)), 10)
     selected_questions = [questions[i] for i in indices]
     selected_answers = [answers[i] for i in indices]
 
@@ -80,10 +81,11 @@ def main():
     for model_name in model_names:
         print(f"Processing embeddings for model: {model_name}")
         process_model_embeddings(model_name, selected_questions, selected_answers, folder_q2a)
-
-    for model_name in model_names:
-        print(f"Processing embeddings for model: {model_name}")
         process_model_embeddings(model_name, selected_answers, selected_questions, folder_a2q)
+
+    # for model_name in model_names:
+    #     print(f"Processing embeddings for model: {model_name}")
+    #     process_model_embeddings(model_name, selected_answers, selected_questions, folder_a2q)
 
 
 if __name__ == '__main__':

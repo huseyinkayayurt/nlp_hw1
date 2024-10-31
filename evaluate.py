@@ -3,6 +3,7 @@ from similarity import cosine_similarity
 import matplotlib.pyplot as plt
 import os
 import time
+from sklearn.manifold import TSNE
 
 
 def load_embeddings(filename):
@@ -49,6 +50,31 @@ def plot_accuracies(model_name, q_to_a_accuracies, a_to_q_accuracies):
     plt.close()
 
 
+def plot_tsne(model_name, output_dir, input_embeddings, output_embeddings, title):
+    """Embeddings verilerini TSNE ile 2D alana indirip grafik oluşturur."""
+    all_embeddings = torch.cat([input_embeddings, output_embeddings], dim=0)
+    # Perplexity değeri veri örneği sayısına uygun olacak şekilde ayarlandı
+    tsne = TSNE(n_components=2, random_state=42, perplexity=min(5, len(all_embeddings) - 1))
+    all_embeddings_2d = tsne.fit_transform(all_embeddings.cpu().numpy())
+
+    # Soru ve yanıt verileri için ayrı renklerle grafik
+    num_inputs = input_embeddings.shape[0]
+    plt.figure(figsize=(10, 8))
+    plt.scatter(all_embeddings_2d[:num_inputs, 0], all_embeddings_2d[:num_inputs, 1], c='blue', label='Questions')
+    plt.scatter(all_embeddings_2d[num_inputs:, 0], all_embeddings_2d[num_inputs:, 1], c='red', label='Answers')
+    plt.title(title)
+    plt.xlabel("TSNE Dimension 1")
+    plt.ylabel("TSNE Dimension 2")
+    plt.legend()
+    # plt.show()
+    # Grafiklerin kaydedileceği dizini oluştur
+
+    os.makedirs(output_dir, exist_ok=True)
+    safe_model_name = model_name.replace("/", "_")
+    plt.savefig(f"{output_dir}/{safe_model_name}_combined_tsne.png")
+    plt.close()
+
+
 def main():
     model_names = [
         "dbmdz/bert-base-turkish-cased",
@@ -66,23 +92,15 @@ def main():
 
         # Soru->Cevap doğrulukları
         # print(f"Calculating Q->A accuracy for model: {model_name}")
-        sorular_embeddings = load_embeddings(f'{folder_q2a}/{safe_model_name}_question_embeddings.pt')
-        cevaplar_embeddings = load_embeddings(f'{folder_q2a}/{safe_model_name}_answer_embeddings.pt')
-        q_to_a_accuracies = calculate_top_k_accuracy(sorular_embeddings, cevaplar_embeddings)
-
-        # Top-1 ve Top-5 değerlerini konsola yazdır
-        # print(f"{model_name} - Q->A Top-1 Accuracy: {q_to_a_accuracies[0]:.2f}")
-        # print(f"{model_name} - Q->A Top-5 Accuracy: {q_to_a_accuracies[4]:.2f}")
+        q_to_a_input_embeddings = load_embeddings(f'{folder_q2a}/{safe_model_name}_input_embeddings.pt')
+        q_to_a_output_embeddings = load_embeddings(f'{folder_q2a}/{safe_model_name}_output_embeddings.pt')
+        q_to_a_accuracies = calculate_top_k_accuracy(q_to_a_input_embeddings, q_to_a_output_embeddings)
 
         # Cevap->Soru doğrulukları
         # print(f"Calculating A->Q accuracy for model: {model_name}")
-        sorular_embeddings = load_embeddings(f'{folder_a2q}/{safe_model_name}_question_embeddings.pt')
-        cevaplar_embeddings = load_embeddings(f'{folder_a2q}/{safe_model_name}_answer_embeddings.pt')
-        a_to_q_accuracies = calculate_top_k_accuracy(sorular_embeddings, cevaplar_embeddings)
-
-        # Top-1 ve Top-5 değerlerini konsola yazdır
-        # print(f"{model_name} - A->Q Top-1 Accuracy: {a_to_q_accuracies[0]:.2f}")
-        # print(f"{model_name} - A->Q Top-5 Accuracy: {a_to_q_accuracies[4]:.2f}")
+        a_to_q_input_embeddings = load_embeddings(f'{folder_a2q}/{safe_model_name}_input_embeddings.pt')
+        a_to_q_output_embeddings = load_embeddings(f'{folder_a2q}/{safe_model_name}_output_embeddings.pt')
+        a_to_q_accuracies = calculate_top_k_accuracy(a_to_q_input_embeddings, a_to_q_output_embeddings)
 
         print(
             f"{model_name} - Q->A Top-1 Accuracy: {q_to_a_accuracies[0]:.2f} Top-5 Accuracy: {q_to_a_accuracies[4]:.2f}")
@@ -91,6 +109,14 @@ def main():
 
         # Grafikleştir ve kaydet
         plot_accuracies(model_name, q_to_a_accuracies, a_to_q_accuracies)
+
+        # TSNE ile görselleştir
+        output_dir_q_to_a = "combined_tsne_plots_q_to_a"
+        output_dir_a_to_q = "combined_tsne_plots_a_to_q"
+        plot_tsne(model_name, output_dir_q_to_a, q_to_a_input_embeddings, q_to_a_output_embeddings,
+                  title=f"{model_name} Q->A Embeddings")
+        plot_tsne(model_name, output_dir_a_to_q, a_to_q_input_embeddings, a_to_q_output_embeddings,
+                  title=f"{model_name} A->Q Embeddings")
 
 
 if __name__ == '__main__':
