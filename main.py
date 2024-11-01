@@ -1,4 +1,3 @@
-from datasets import load_dataset
 from embeddings import load_model_and_tokenizer, get_embeddings
 import torch
 import random
@@ -60,19 +59,18 @@ def main():
     questions, answers = load_data_from_csv(file_path)
 
     # Rasgele 1000 soru-cevap seçimi
-    indices = random.sample(range(len(questions)), 10)
+    indices = random.sample(range(len(questions)), 1000)
     selected_questions = [questions[i] for i in indices]
     selected_answers = [answers[i] for i in indices]
 
     # Kullanılacak modeller
     model_names = [
         "dbmdz/bert-base-turkish-cased",
+        "intfloat/multilingual-e5-large",
+        "Alibaba-NLP/gte-multilingual-base",
+        "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
         "jinaai/jina-embeddings-v3",
-        "BAAI/bge-large-en-v1.5",
-        "Alibaba-NLP/gte-base-en-v1.5",
-        "intfloat/multilingual-e5-large-instruct",
-        "Alibaba-NLP/gte-multilingual-base"
-
+        "izhx/udever-bloom-560m"
     ]
 
     folder_q2a = "embeddings_q2a"
@@ -83,20 +81,12 @@ def main():
         process_model_embeddings(model_name, selected_questions, selected_answers, folder_q2a)
         process_model_embeddings(model_name, selected_answers, selected_questions, folder_a2q)
 
-    # for model_name in model_names:
-    #     print(f"Processing embeddings for model: {model_name}")
-    #     process_model_embeddings(model_name, selected_answers, selected_questions, folder_a2q)
-
 
 if __name__ == '__main__':
-    # Başlangıç zamanı
     start_time = time.time()
     main()
-    # Bitiş zamanı
     end_time = time.time()
     elapsed_time = end_time - start_time
-
-    # Zamanı saat, dakika ve saniye olarak formatla
     hours, rem = divmod(elapsed_time, 3600)
     minutes, seconds = divmod(rem, 60)
     print(f"Total execution time: {int(hours)}h {int(minutes)}m {seconds:.2f}s")
