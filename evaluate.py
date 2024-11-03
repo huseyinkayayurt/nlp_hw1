@@ -2,7 +2,6 @@ import torch
 from similarity import cosine_similarity
 import matplotlib.pyplot as plt
 import os
-import time
 from sklearn.manifold import TSNE
 
 
@@ -74,20 +73,8 @@ def plot_tsne(model_name, output_dir, input_embeddings, output_embeddings, title
     plt.close()
 
 
-def main():
-    model_names = [
-        "dbmdz/bert-base-turkish-cased",
-        "intfloat/multilingual-e5-large",
-        "Alibaba-NLP/gte-multilingual-base",
-        "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
-        "jinaai/jina-embeddings-v3",
-        "izhx/udever-bloom-560m"
-    ]
-
-    folder_q2a = "embeddings_q2a"
-    folder_a2q = "embeddings_a2q"
-
-    for model_name in model_names:
+def evaluate(model_list, folder_q2a, folder_a2q):
+    for model_name in model_list:
         safe_model_name = model_name.replace("/", "_")
 
         # Soru->Cevap doğrulukları
@@ -111,13 +98,3 @@ def main():
         output_dir_a_to_q = "combined_tsne_plots_a_to_q"
         plot_tsne(model_name, output_dir_q_to_a, q_to_a_input_embeddings, q_to_a_output_embeddings, title=f"{model_name} Q->A Embeddings")
         plot_tsne(model_name, output_dir_a_to_q, a_to_q_input_embeddings, a_to_q_output_embeddings, title=f"{model_name} A->Q Embeddings")
-
-
-if __name__ == '__main__':
-    start_time = time.time()
-    main()
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    hours, rem = divmod(elapsed_time, 3600)
-    minutes, seconds = divmod(rem, 60)
-    print(f"Total execution time: {int(hours)}h {int(minutes)}m {seconds:.2f}s")

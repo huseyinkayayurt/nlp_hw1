@@ -1,4 +1,5 @@
 from embeddings import load_model_and_tokenizer, get_embeddings
+from evaluate import evaluate
 import torch
 import random
 import csv
@@ -75,11 +76,15 @@ def main():
 
     folder_q2a = "embeddings_q2a"
     folder_a2q = "embeddings_a2q"
+
+    results = []
     # Her model için embedding işlemi
     for model_name in model_names:
         print(f"Processing embeddings for model: {model_name}")
         process_model_embeddings(model_name, selected_questions, selected_answers, folder_q2a)
         process_model_embeddings(model_name, selected_answers, selected_questions, folder_a2q)
+
+    evaluate(model_names, folder_q2a, folder_a2q)
 
 
 if __name__ == '__main__':
